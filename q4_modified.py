@@ -1,8 +1,5 @@
-# Photoelectric Effect Simulator (visual-enhanced template)
-# NOTE:
-# This file shows the visual enhancements integrated while preserving the
-# original variable names and overall structure. Replace your original file
-# with this version and keep extending it as needed.
+# Photoelectric Effect Simulator
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,10 +8,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.patches import FancyBboxPatch
 import matplotlib.patheffects as pe
 
-# ------------------------------------------------------------------
-# Everything below is identical in spirit to your original program.
-# Only the drawing style has been upgraded.
-# ------------------------------------------------------------------
+
 
 h = 4.135667696e-15
 c = 2.998e8
@@ -94,7 +88,7 @@ ax_sim.set_xticks([])
 ax_sim.set_yticks([])
 
 
-# ---------- Improved background ----------
+
 ax_sim.set_facecolor("white")
 grad=np.linspace(0,1,300)
 grad=np.tile(grad,(300,1))
@@ -107,7 +101,7 @@ ax_sim.imshow(
     zorder=0,
 )
 
-# ---------- Vacuum chamber ----------
+#Vacuum chamber
 glass = FancyBboxPatch(
     (0.16,0.10),
     0.72,
@@ -123,7 +117,7 @@ ax_sim.add_patch(glass)
 
 
 
-#-----Battery------
+#Battery
 from matplotlib.patches import Rectangle
 
 battery_blue = Rectangle(
@@ -162,7 +156,7 @@ battery_plus = ax_sim.text(
     fontsize=18,
     fontweight="bold",
 )
-# ---------- Ammeter -----------
+#Ammeter
 ammeter = plt.Circle(
     (0.70, -0.07),
     0.08,
@@ -186,7 +180,7 @@ ammeter_value = ax_sim.text(
     fontweight="bold",
     zorder=30,
 )
-# ---------- Metallic plates ----------
+#Metallic plates 
 left_plate=FancyBboxPatch(
     (PLATE_X-0.02,0.05),0.02,0.90,
     boxstyle="round,pad=0.005",
@@ -226,7 +220,7 @@ plate_sign_right = ax_sim.text(
     ha="center",
 )
 
-# ---------- Animated light beam ----------
+#Animated light beam 
 beam_x = np.linspace(-0.04, PLATE_X, 400)
 
 beam_y0 = np.linspace(0.88, 0.50, 400)
@@ -247,11 +241,11 @@ light_src = ax_sim.scatter(
     clip_on=False,
 )
 
-# ---------- Glowing photons ----------
+#Glowing photons 
 photon_glow=ax_sim.scatter([],[],s=120,alpha=.12)
 photon_scat=ax_sim.scatter([],[],s=18)
 
-#--------- Wire ------------
+#Wire 
 # left plate to battery
 ax_sim.plot(
     [PLATE_X-0.01, PLATE_X-0.01],
@@ -311,7 +305,7 @@ ax_sim.plot(
     clip_on=False,
 )
 
-# ---------- Glowing electrons ----------
+#Glowing electrons 
 electron_glow=ax_sim.scatter([],[],s=180,color="cyan",alpha=.08)
 electron_scat=ax_sim.scatter([],[],s=20,color="#66ffff")
 
@@ -361,7 +355,7 @@ s_i = Slider(
     color="gold"
 )
 
-# ---------------- Metal dropdown ----------------
+#"Metal" dropdown 
 from matplotlib.patches import FancyBboxPatch
 
 dropdown_open = False
@@ -399,7 +393,7 @@ dropdown_arrow = fig.text(
 option_boxes = []
 option_texts = []
 
-# Create dropdown options (hidden initially)
+# Create dropdown options 
 y0 = 0.195
 
 for i, metal in enumerate(METAL_NAMES):
@@ -430,7 +424,7 @@ for i, metal in enumerate(METAL_NAMES):
     option_texts.append(t)
 
 
-# ---------- Graph selector ----------
+#Graph selector 
 ax_graph = fig.add_axes([0.63, 0.03, 0.33, 0.14])
 
 graph_radio = RadioButtons(
@@ -443,9 +437,9 @@ graph_radio = RadioButtons(
     active=0,
 )
 
-# Move the text so that it lines up nicely
+
 for txt in graph_radio.labels:
-    txt.set_x(0.18)          # decrease -> move text left
+    txt.set_x(0.18)          
     txt.set_fontsize(9)
 state = {
     "metal": METAL_NAMES[4],
@@ -840,7 +834,7 @@ def animate(_):
         electron_scat.set_offsets(empty)
         electron_glow.set_offsets(empty)
 
-# ---------- Photoelectric current ----------
+#Photoelectric current 
     if KE_max <= 0:
         current = 0.0
 
@@ -934,9 +928,9 @@ def on_click(event):
     x = event.x
     y = event.y
 
-    # ----------------------------
+
     # 1. Did we click a metal?
-    # ----------------------------
+   
     if dropdown_open:
 
         for i, txt in enumerate(option_texts):
@@ -958,9 +952,9 @@ def on_click(event):
                 fig.canvas.draw_idle()
                 return
 
-    # ----------------------------
+ 
     # 2. Did we click the arrow?
-    # ----------------------------
+
     arrow_bbox = dropdown_arrow.get_window_extent(renderer)
 
     if arrow_bbox.contains(x, y):
@@ -990,9 +984,9 @@ def on_click(event):
         fig.canvas.draw_idle()
         return
 
-    # ----------------------------
+
     # 3. Did we click the main box?
-    # ----------------------------
+
     box_bbox = dropdown_box.get_window_extent(renderer)
 
     if box_bbox.contains(x, y):
@@ -1022,9 +1016,9 @@ def on_click(event):
         fig.canvas.draw_idle()
         return
 
-    # ----------------------------
+
     # 4. Clicked elsewhere
-    # ----------------------------
+
     if dropdown_open:
 
         dropdown_open = False
