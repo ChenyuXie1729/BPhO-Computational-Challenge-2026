@@ -1,4 +1,4 @@
-#Created by Anton Kornichenko
+#Created by Anton Kostornichenko
 
 import numpy as np
 import matplotlib.pyplot as plt
