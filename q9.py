@@ -75,7 +75,7 @@ def plot_graph(graph_type):
             y_data = electron_recoil_angle(degrees, energy)
             ax.plot(degrees, y_data, color=color, linewidth=1.2, label=f'{energy} /keV')
             ax.set_title(r'Electron Recoil Angle $\phi$ against Photon Scattering Angle $\theta$')
-            ax.set_ylabel('Electron Recoil Angle $\phi$ /degrees')
+            ax.set_ylabel(r'Electron Recoil Angle $\phi$ /degrees')
             ax.set_ylim(0, 90)
             ax.set_yticks(np.arange(0, 91, 15))
 
