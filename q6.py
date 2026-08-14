@@ -1,100 +1,294 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
+from scipy import constants
+from scipy.interpolate import make_interp_spline
+from matplotlib.widgets import Slider, RadioButtons, CheckButtons, Button
 
-h   = 6.62607015e-34
-m_e = 9.10938356e-31
-e   = 1.602176634e-19
+def Energy(n, L):
+    return (constants.hbar * np.pi * n) ** 2 / (2 * constants.m_e * L ** 2)
 
-r_tube = 65.0
+def Probability(x, n, L):
+    inside = (x >= 0) & (x <= L)
+    probability = (2 / L) * np.sin(n * np.pi * x / L) ** 2
+    return np.where(inside, probability, 0)
 
-d_values = {
-    "d = 0.123 nm": 0.123e-9,
-    "d = 0.213 nm": 0.213e-9,
-}
-colors = {"d = 0.123 nm": "tab:blue", "d = 0.213 nm": "tab:green"}
+box_width = 3000e-9
 
+quantum_numbers = np.arange(1, 6)
 
-def wavelength(V):
-    return h / np.sqrt(2 * m_e * e * V)
+fig = plt.figure(figsize=(12, 7))
 
+graph = fig.add_axes([0.08, 0.18, 0.68, 0.72])
 
-def bragg_angle(lam, d):
-    return np.arcsin(np.clip(lam / (2 * d), -1, 1))
+graph_selector = plt.axes([0.81, 0.67, 0.15, 0.18])
 
+graph_buttons = RadioButtons(
+    graph_selector,
+    (
+        "Energy Levels",
+        "Probability Density"
+    )
+)
 
-def ring_radius_mm(V, d):
-    lam = wavelength(V)
-    phi = bragg_angle(lam, d)
-    return r_tube * np.sin(2 * phi)
+n_selector = plt.axes([0.81, 0.30, 0.15, 0.30])
 
+n_buttons = CheckButtons(
+    n_selector,
+    (
+        "n = 1",
+        "n = 2",
+        "n = 3",
+        "n = 4",
+        "n = 5"
+    ),
+    (
+        False,
+        False,
+        False,
+        False,
+        False
+    )
+)
 
-fig = plt.figure(figsize=(12, 6))
-fig.suptitle("Electron diffraction", fontsize=13, fontweight="bold")
+clear_ax = plt.axes([0.81,0.20,0.15,0.05])
 
-ax_tube = fig.add_axes([0.06, 0.18, 0.40, 0.72])
-ax_tube.set_aspect('equal')
-ax_tube.set_xlim(-75, 75); ax_tube.set_ylim(-75, 75)
-ax_tube.set_xticks([]); ax_tube.set_yticks([])
-ax_tube.set_title("Diffraction tube")
+clear_button = Button(
+    clear_ax,
+    "Clear"
+)
 
-ax_tube.add_patch(plt.Circle((0, 0), r_tube, fill=False, linewidth=2, color='black'))
-ax_tube.add_patch(plt.Circle((0, 0), 1.2, color='red', zorder=5))
+slider_axis = plt.axes([0.12, 0.06, 0.78, 0.04])
 
-rings = {}
-for label, d in d_values.items():
-    circ = plt.Circle((0, 0), 10, fill=False, linewidth=2, color=colors[label], label=label)
-    ax_tube.add_patch(circ)
-    rings[label] = circ
-ax_tube.legend(loc='upper right', fontsize=8)
-info_text = ax_tube.text(0, -85, "", fontsize=9, ha='center', va='top')
+width_slider = Slider(
+    slider_axis,
+    "Box width /nm",
+    1,
+    10,
+    valinit=5,
+    valstep=0.1
+)
 
-ax_verify = fig.add_axes([0.56, 0.18, 0.40, 0.72])
-ax_verify.set_xlabel(r'$1/\sqrt{V}$')
-ax_verify.set_ylabel(r'$\sin\phi$')
-ax_verify.grid(True, alpha=0.4)
-
-V_range = np.linspace(1000, 5000, 200)
-markers = {}
-x_max = 0.0
-for label, d in d_values.items():
-    lam = wavelength(V_range)
-    phi = bragg_angle(lam, d)
-    x_data = 1 / np.sqrt(V_range)
-    y_data = np.sin(phi)
-    x_max = max(x_max, x_data.max())
-
-    ax_verify.plot(x_data, y_data, '-', color=colors[label], label=label, alpha=0.8)
-    ax_verify.plot([0, x_data[-1]], [0, y_data[-1]], '--', color=colors[label],
-                    alpha=0.35, linewidth=1)
-
-    (pt,) = ax_verify.plot([], [], 'o', color=colors[label], markersize=9,
-                            markeredgecolor='black')
-    markers[label] = pt
-
-ax_verify.set_xlim(0, x_max * 1.08)
-ax_verify.set_ylim(0, None)
-ax_verify.legend(fontsize=8)
-
-ax_slider = fig.add_axes([0.20, 0.05, 0.60, 0.04])
-voltage_slider = Slider(ax_slider, "Voltage / kV", 1.0, 5.0, valinit=2.0, valstep=0.1)
+current_graph = "Energy Levels"
+wave_lines = {}
+wave_levels = {}
+n_selector.set_visible(False)
 
 
-def update(_):
-    V = voltage_slider.val * 1000
-    lam = wavelength(V)
-    parts = []
-    for label, d in d_values.items():
-        phi = bragg_angle(lam, d)
-        R = r_tube * np.sin(2 * phi)
-        rings[label].set_radius(R)
-        markers[label].set_data([1 / np.sqrt(V)], [np.sin(phi)])
-        parts.append(f"{label}: R = {R:.1f} mm")
-    info_text.set_text(f"V = {V/1000:.2f} kV   $\\lambda$ = {lam*1e12:.2f} pm\n" + "    ".join(parts))
+
+def draw_energy():
+
+    graph.clear()
+
+
+
+    L = width_slider.val * 1e-9
+
+    energies = Energy(
+        quantum_numbers,
+        L
+    ) / constants.e
+
+    x_dense = np.linspace(
+        quantum_numbers.min(),
+        quantum_numbers.max(),
+        300
+    )
+
+    spline = make_interp_spline(
+        quantum_numbers,
+        energies,
+        k=2
+    )
+
+    y_dense = spline(x_dense)
+
+    graph.plot(
+        x_dense,
+        y_dense,
+        '--',
+        color='red',
+        linewidth=1
+    )
+
+    graph.scatter(
+        quantum_numbers,
+        energies,
+        color='red',
+        s=45,
+        zorder=5
+    )
+
+    graph.set_xlim(1, 5)
+
+    graph.set_ylim(
+        0,
+        max(energies) * 1.1
+    )
+
+    graph.set_xticks(
+        quantum_numbers
+    )
+
+    graph.set_xlabel(
+        "Quantum Number"
+    )
+
+    graph.set_ylabel(
+        "Energy /eV"
+    )
+
+    graph.set_title(
+        "Energy Levels against Quantum Number"
+    )
+
+    graph.grid(
+        alpha=0.3
+    )
+
+
+def draw_probability():
+
+    graph.clear()
+
+    L = width_slider.val * 1e-9
+
+    x = np.linspace(
+        0,
+        L,
+        1000
+    )
+
+    x_nm = x * 1e9
+
+    colours = [
+        "red",
+        "blue",
+        "green",
+        "orange",
+        "purple"
+    ]
+
+    status = n_buttons.get_status()
+
+    for i in range(5):
+
+        if status[i]:
+
+            n = i + 1
+
+            probability = Probability(
+                x,
+                n,
+                L
+            )
+
+            graph.plot(
+                x_nm,
+                probability,
+                color=colours[i],
+                linewidth=2,
+                label=f"n = {n}"
+            )
+
+    graph.set_xlim(
+        0,
+        width_slider.val
+    )
+
+    graph.set_ylim(
+        0,
+        2 / L * 1.05
+    )
+
+    graph.set_xlabel(
+        "Position /nm"
+    )
+
+    graph.set_ylabel(
+        "Probability Density"
+    )
+
+    graph.set_title(
+        "Probability Density"
+    )
+
+    graph.grid(alpha=0.3)
+
+    if any(status):
+        graph.legend()
+
+    fig.canvas.draw_idle()
+def update_graph(_):
+
+    global current_graph
+
+    current_graph = graph_buttons.value_selected
+
+    if current_graph == "Energy Levels":
+
+        n_selector.set_visible(False)
+
+        draw_energy()
+
+    else:
+
+        n_selector.set_visible(True)
+
+        draw_probability()
+
     fig.canvas.draw_idle()
 
 
-voltage_slider.on_changed(update)
-update(None)
+def update_slider(value):
+
+    if current_graph == "Energy Levels":
+
+        draw_energy()
+
+    else:
+
+        draw_probability()
+
+    fig.canvas.draw_idle()
+
+def update_quantum(label):
+
+    if current_graph == "Probability Density":
+
+        L = width_slider.val * 1e-9
+
+        x = np.linspace(0, L, 1000)
+
+        x_nm = x * 1e9
+
+        draw_probability()
+
+        fig.canvas.draw_idle()
+graph_buttons.on_clicked(update_graph)
+
+width_slider.on_changed(update_slider)
+
+n_buttons.on_clicked(update_quantum)
+def clear_wavefunctions(event):
+
+    for i in range(5):
+
+        if n_buttons.get_status()[i]:
+
+            n_buttons.set_active(i)
+
+clear_button.on_clicked(clear_wavefunctions)
+
+draw_energy()
+
+graph.set_facecolor("white")
+
+graph.tick_params(
+    axis="both",
+    labelsize=10
+)
+
+graph.spines["top"].set_visible(True)
+graph.spines["right"].set_visible(True)
 
 plt.show()
