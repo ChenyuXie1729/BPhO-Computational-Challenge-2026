@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Circle
+from matplotlib.widgets import Slider
 
 L = 10.0                # box size
 N = 40                  # number of small particles
@@ -10,7 +11,7 @@ r = 0.12                # small radius
 M = 20.0                # large mass
 R = 0.8                 # large radius
 dt = 0.02               # time step
-noise_strength = 1.2    # intensity of the random walk (Brownian kicks)
+noise_strength = 1.2    # intensity of the random walk (Brownian kicks)  
 v_max = 4.0
 trail_len = 500          # how many past points to keep
 
@@ -30,6 +31,9 @@ ax.set_ylim(0, L)
 ax.set_aspect('equal')
 ax.set_facecolor('white')
 ax.grid(False)
+fig.set_size_inches(11,7)
+
+ax.set_position([0.05,0.08,0.65,0.85])
 
 big_circle = Circle(big_pos, R, fill=False, edgecolor='red', linewidth=2, zorder=5)
 small_circles = [Circle(small_pos[i], r, color='blue', alpha=0.6, zorder=3)
@@ -40,6 +44,77 @@ for c in small_circles:
 
 trail_x, trail_y = [big_pos[0]], [big_pos[1]]
 trail_line, = ax.plot([], [], color='red', linewidth=1, alpha=0.6, zorder=4)
+
+
+ax_particles = plt.axes([0.80, 0.75, 0.15, 0.03])
+ax_noise     = plt.axes([0.80, 0.65, 0.15, 0.03])
+ax_speed     = plt.axes([0.80, 0.55, 0.15, 0.03])
+
+slider_particles = Slider(
+    ax_particles,
+    "Particles",
+    10,
+    200,
+    valinit=N,
+    valstep=5
+)
+
+slider_noise = Slider(
+    ax_noise,
+    "Noise",
+    0.0,
+    3.0,
+    valinit=noise_strength,
+    valstep=0.1
+)
+
+slider_speed = Slider(
+    ax_speed,
+    "Max Speed",
+    1.0,
+    10.0,
+    valinit=v_max,
+    valstep=0.5
+)
+
+def regenerate(val):
+
+    global N, noise_strength, v_max
+    global small_pos, small_vel, small_circles
+
+    new_N = int(slider_particles.val)
+    noise_strength = slider_noise.val
+    v_max = slider_speed.val
+
+    
+    if new_N != N:
+
+        N = new_N
+
+        for c in small_circles:
+            c.remove()
+
+        small_pos = np.random.uniform(r, L-r, (N, 2))
+        small_vel = np.random.randn(N, 2)
+
+        small_circles = [
+            Circle(
+                small_pos[i],
+                r,
+                color='blue',
+                alpha=0.6,
+                zorder=3
+            )
+            for i in range(N)
+        ]
+
+        for c in small_circles:
+            ax.add_patch(c)
+
+    fig.canvas.draw_idle()
+slider_particles.on_changed(regenerate)
+slider_noise.on_changed(regenerate)
+slider_speed.on_changed(regenerate)
 
 def update(frame):
     global big_pos, big_vel, small_pos, small_vel
