@@ -50,7 +50,7 @@ current_graph = 'Fractional Shift'
 slider_line = None
 
 def plot_graph(graph_type):
-      global current_graph, slider_line
+    global current_graph, slider_line
     current_graph = graph_type
     
     ax.clear()
@@ -100,7 +100,7 @@ def plot_graph(graph_type):
     fig.canvas.draw_idle()
 
 def update_slider(val):
-        global current_graph, slider_line
+    global current_graph, slider_line
     if slider_line is not None:
         if current_graph == 'Fractional Shift':
             new_y = fractional_compton_shift(degrees, val)
