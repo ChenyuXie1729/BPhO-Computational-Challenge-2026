@@ -52,7 +52,7 @@ def plot_graph(graph_type):
     ax.clear()
     
     if graph_type == 'Planck Curve':
-              slider.set_active(True)
+        slider.set_active(True)
         slider_ax.set_visible(True)
         set_crystal_ui_state(visible=False, active=False)
         
